@@ -1,0 +1,247 @@
+#!/bin/bash
+#
+# Simple bash script to send text messages from the command line with
+# the kdeconnect-cli command (read more about KDE connect here:
+# https://play.google.com/store/apps/details?id=org.kde.kdeconnect_tp&hl=en).
+#
+# The reason for creating this script is to add some custom
+# address book functionality with bash autocompletion. I do not care
+# about fancy integrations with Google contact lists or Akonadi stuff
+# from the KDE community. All I need is a simple Name/Phone
+# addressBook that I will maintain in a simple text file, and a command
+# that will allow me to autocomplete phone numbers from that list in
+# the command line.
+#
+# --------------------------------------------------------------------
+#
+#  Copyright (C) 2018 Vangelis Tasoulas <cyberang3l@gmail.com>
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# --------------------------------------------------------------------
+#
+# You can define your address book directly in this script in the
+# addressBook bash array below. However, it is suggested to
+# create a "$HOME/.addressBook" file instead, in order to allow
+# script updates without having to copy/paste the address book in
+# the updated script over and over again.
+#
+# Rules for the addressBook:
+#  1. One Name/phone per line.
+#  2. The Name and phone must be enclosed in double quotes.
+#  3. The name/phone must be separated by one or more whitespace charactes (tabs or spaces).
+#  4. Do not use the '|' characted in your names or phones.
+#
+# You can find a sample addressBook definition with two contacts right below:
+addressBook=(
+	"John Doe"	"+4712345678"
+	"Jane Doe"	"+306971234567"
+)
+
+# Add the unique hex ID of the mobile device that you want to use
+# for sending text messages in the variable "phoneIdToUse" below.
+# 
+# You can get a list of all kde connect paired phone ids with the
+# command "kdeconnect-cli -l".
+#
+# Similar to the addressBook, it is suggested to add this variable
+# at the top of your "$HOME/.addressBook" file so that you don't
+# have to change it each time you update the script.
+phoneIdToUse=0123456789abcdef
+
+# If there is a .addressBook file in the home directory
+# of the user, then source this file.
+if [[ -f "$HOME"/.addressBook ]]; then
+	. "$HOME"/.addressBook
+fi
+
+# Function that prints a nicely formatted address book
+function printAddressBook() {
+	set -- "${addressBook[@]}"
+	while [[ $# -gt 0 ]]; do
+		name="$1"; shift;
+		phonenumber="$1"; shift
+		nameLen="${#name}"
+		phoneLen="${#phonenumber}"
+		if [[ $nameLen -gt $longestName ]]; then
+			longestName=$nameLen
+		fi
+		if [[ $phoneLen -gt $longestPhone ]]; then
+			longestPhone=$phoneLen
+		fi
+	done
+
+	totalLen=$(( longestName + longestPhone + 7 ))
+
+	printf -- '-%.0s' $(seq 1 $totalLen); echo ""
+	set -- "${addressBook[@]}"
+
+	(while [[ $# -gt 0 ]]; do
+		name="$1"; shift;
+		phonenumber="$1"; shift
+		phoneLen="${#phonenumber}"
+		lineEndPad=$(( longestPhone - phoneLen + 1 ))
+		printf "| %${longestName}s | %.${longestPhone}s %${lineEndPad}s\n" "$name" "$phonenumber" "|"
+	done) | sort
+	printf -- '-%.0s' $(seq 1 $totalLen); echo -e ""
+}
+
+# Function that prints the bash autocompletion code.
+# This is the most important feature of this script.
+function printBashCompletionCode() {
+	read -r -d '' bash_completion <<- EOV
+	_$(basename $0)_bash_completion_longopts()
+	{
+		local opts
+
+		# Read the available options dynamically by parsing the output
+		# of sysdata-collector.py --help
+		opts=\$($0 --help | grep -o '\-\-\([^ ]\)\+')
+
+		COMPREPLY=( \$(compgen -W "\${opts}" -- "\${cur}") )
+	}
+
+	_$(basename $0)_bash_completion_address_book()
+	{
+		$(basename $0) --address-book | tail -n +2 | head -n -1 | awk -F"|" '{print \$2 "~" \$3}' | sed -e 's/\s*$//g' -e 's/^\s*//g'
+#		$(basename $0) --address-book | awk '{last=\$NF; \$NF=""; printf "%s~ %s\n", \$0, last}'
+	}
+
+	_$(basename $0)_bash_subcompletions()
+	{
+		# Get the options for each sub completion
+		# for example, if --send-to is prev, send-to has to be a phone number.
+		# So the auto completion suggestions should only show the phone numbers
+		# from the address book.
+		local prev
+
+		prev="\$1"
+
+		# Use --help to determine if a command is expecting an argument
+		# or if it is just a switch. If just a switch, \$sub_comp == ""
+		sub_comp=\$($(basename $0) --help | grep -oP " (\${prev}) \w+(\.\w+)?" | awk '{print \$2}')
+
+		case "\${sub_comp}" in
+			PHONE_NUMBER)
+				local IFS=$'\n'
+				# In the COMREPLY include the names and the number.
+				COMPREPLY=( \$(compgen -W "\$(_$(basename $0)_bash_completion_address_book)" -- \$cur ) )
+				# When only one completion is left, pick only the number.
+				if [[ \${#COMPREPLY[*]} -eq 1 ]]; then
+					# Remove ' ~ ' and everything before (remove the name basically and keep the number)
+					COMPREPLY=( \${COMPREPLY[0]##* ~ } )
+				fi
+				;;
+			"")
+				 _$(basename $0)_bash_completion_longopts
+				;;
+		esac
+	}
+
+	_$(basename $0)_bash_completion()
+	{
+		local cur prev
+		COMPREPLY=()
+		cur=\${COMP_WORDS[COMP_CWORD]}
+		prev=\${COMP_WORDS[COMP_CWORD-1]}
+
+		# the _expand function will expand ~ to full paths
+		_expand || return 0
+
+		# If the previous argument is a parameter
+		# The check if there is any sub completion for
+		# this specific parameter
+		if [[ "\${prev}" == "-"* ]]; then
+			_$(basename $0)_bash_subcompletions "\${prev}"
+		else
+			# Otherwise, show all of the available options
+			_$(basename $0)_bash_completion_longopts
+		fi
+	}
+
+	# Use complete with the option "-o filenames" and the autocompletion
+	# will automatically escape spaces in the COMPREPLY list (as we want to.
+	complete -o filenames -F _$(basename $0)_bash_completion $(basename $0)
+EOV
+
+	echo "${bash_completion}"
+}
+
+# Prints a simple help message with all the accepted options.
+function usage() {
+	echo -e "Usage: $(basename $0) [OPTIONS] --send-to <phoneNumber> \"text-message\""
+	echo -e "Uses kdeconnect-cli to send an sms to a phone number"
+	echo -e "listed in a user-maintained address book."
+	echo -e ""
+	echo -e " -a, --address-book           Prints the complete address book"
+	echo -e " -b, --bash-completion        Prints the code for bash-completion."
+	echo -e "                               add this line at the end of your"
+	echo -e "                               .bashrc file:"
+	echo -e "                                       \033[0;36msource <($(basename $0) -b)\033[0m"
+	echo -e " -s, --send-to PHONE_NUMBER   The phone number to send the SMS to."
+	echo -e "                               This is a mandatory option."
+	echo -e " -h, --help                   Prints this help message"
+}
+
+sendTo=
+hFlag=0
+aFlag=0
+bFlag=0
+
+args=$( getopt -o abhs: -l address-book,bash-completion,help,send-to: -- "$@" )
+eval set -- $args
+
+
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+		-h|--help) hFlag=1; shift ;;
+		-a|--address-book) aFlag=1; shift ;;
+		-b|--bash-completion) bFlag=1; shift ;;
+		-s|--send-to) sendTo="$2"; shift 2;;
+		--) shift; break ;; # No more options
+		*) break ;;
+	esac
+done
+
+if [[ ${hFlag} -eq 1 ]]; then usage; exit 0; fi
+if [[ ${aFlag} -eq 1 ]]; then printAddressBook; exit 0; fi
+if [[ ${bFlag} -eq 1 ]]; then printBashCompletionCode; exit 0; fi
+
+
+if [[ $# -eq 0 ]]; then
+	echo -e "\033[0;31m\nERROR: The text-message must be provided as a single (quoted) positional argument.\n\033[0m"
+	usage
+	exit 1
+elif [[  $# -gt 1 ]]; then
+	echo -e "\033[0;31m\nERROR: Only one positional argument (text-message) can be accepted.\n\033[0m"
+	usage
+	exit 1
+fi
+
+if [[ -z "${sendTo}" ]]; then
+	echo -e "\033[0;31m\nERROR: The option --send-to is mandatory but you did not provide it.\n\033[0m"
+	usage
+	exit 1
+fi
+
+message="$1"
+
+if ! kdeconnect-cli -l | grep 3e76ede177c41eb7 | grep "paired and reachable" 2>&1 > /dev/null; then
+	echo -e "The paired device with id ${phoneIdToUse} is either not paired or not not reachable."
+	echo -e "Here is a list of all kdeconnect-cli paired devices (not necessarily reachable):"
+	kdeconnect-cli -l
+	exit 1
+fi
+
+kdeconnect-cli --device "${phoneIdToUse}" --send-sms "${message}" --destination "${sendTo}"
