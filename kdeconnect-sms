@@ -40,8 +40,8 @@
 # Rules for the addressBook:
 #  1. One Name/phone per line.
 #  2. The Name and phone must be enclosed in double quotes.
-#  3. The name/phone must be separated by one or more whitespace charactes (tabs or spaces).
-#  4. Do not use the '|' characted in your names or phones.
+#  3. The name/phone must be separated by one or more whitespace characters (tabs or spaces).
+#  4. Do not use the '|' character in your names or phones.
 #
 # You can find a sample addressBook definition with two contacts right below:
 addressBook=(
@@ -184,7 +184,7 @@ function usage() {
 	echo -e "Uses kdeconnect-cli to send an sms to a phone number"
 	echo -e "listed in a user-maintained address book."
 	echo -e ""
-	echo -e " -a, --address-book           Prints the complete address book"
+	echo -e " -a, --address-book           Prints the address book nicely formatted."
 	echo -e " -b, --bash-completion        Prints the code for bash-completion."
 	echo -e "                               add this line at the end of your"
 	echo -e "                               .bashrc file:"
