@@ -92,7 +92,10 @@ function printAddressBook() {
 		phonenumber="$1"; shift
 		phoneLen="${#phonenumber}"
 		lineEndPad=$(( longestPhone - phoneLen + 1 ))
-		printf "| %${longestName}s | %.${longestPhone}s %${lineEndPad}s\n" "$name" "$phonenumber" "|"
+		# The original printf does not handle unicode characters properly :( , but gawk does.
+		#  https://unix.stackexchange.com/questions/350240/why-is-printf-shrinking-umlaut
+		#printf "| %${longestName}s | %.${longestPhone}s %${lineEndPad}s\n" "$name" "$phonenumber" "|"
+		gawk 'BEGIN { printf "'"$(echo "| %${longestName}s | %.${longestPhone}s %${lineEndPad}s\n")"'","'"$name"'","'"$phonenumber"'","|" }'
 	done) | sort
 	printf -- '-%.0s' $(seq 1 $totalLen); echo -e ""
 }
@@ -115,7 +118,6 @@ function printBashCompletionCode() {
 	_$(basename $0)_bash_completion_address_book()
 	{
 		$(basename $0) --address-book | tail -n +2 | head -n -1 | awk -F"|" '{print \$2 "~" \$3}' | sed -e 's/\s*$//g' -e 's/^\s*//g'
-#		$(basename $0) --address-book | awk '{last=\$NF; \$NF=""; printf "%s~ %s\n", \$0, last}'
 	}
 
 	_$(basename $0)_bash_subcompletions()
@@ -173,7 +175,7 @@ function printBashCompletionCode() {
 	# Use complete with the option "-o filenames" and the autocompletion
 	# will automatically escape spaces in the COMPREPLY list (as we want to.
 	complete -o filenames -F _$(basename $0)_bash_completion $(basename $0)
-EOV
+	EOV
 
 	echo "${bash_completion}"
 }
