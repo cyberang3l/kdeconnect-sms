@@ -63,3 +63,7 @@ listed in a user-maintained address book.
                                This is a mandatory option.
  -h, --help                   Prints this help message
 ```
+
+## Demo
+
+![demo-bash-completion](https://user-images.githubusercontent.com/5658474/39655553-9c385e70-4ffa-11e8-937e-77473f322cb2.gif)
