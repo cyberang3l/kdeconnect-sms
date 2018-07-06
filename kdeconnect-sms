@@ -239,7 +239,7 @@ fi
 
 message="$1"
 
-if ! kdeconnect-cli -l | grep "${phoneIdToUse}" | grep "paired and reachable" 2>&1 > /dev/null; then
+if ! kdeconnect-cli --list-available | grep "${phoneIdToUse}" 2>&1 > /dev/null; then
 	echo -e "The device with id ${phoneIdToUse} is either not paired or not not reachable."
 	echo -e "Here is a list of all kdeconnect-cli paired devices (not necessarily reachable):"
 	kdeconnect-cli -l
