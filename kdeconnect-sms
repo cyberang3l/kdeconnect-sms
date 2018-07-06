@@ -132,7 +132,7 @@ function printBashCompletionCode() {
 
 		# Use --help to determine if a command is expecting an argument
 		# or if it is just a switch. If just a switch, \$sub_comp == ""
-		sub_comp=\$($(basename $0) --help | grep -oP " (\${prev}) \w+(\.\w+)?" | awk '{print \$2}')
+		sub_comp=\$($(basename $0) --help | grep -oP " \${prev}(, --.*?)? \K\w+")
 
 		case "\${sub_comp}" in
 			PHONE_NUMBER)
