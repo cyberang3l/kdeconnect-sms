@@ -15,7 +15,7 @@ cd /opt
 sudo git clone https://github.com/cyberang3l/kdeconnect-sms.git
 sudo ln -s /opt/kdeconnect-sms/kdeconnect-sms /usr/local/bin/kdeconnect-sms
 ```
-> **TIP**: If you think the `kdeconnect-sms` command name feels too long, you can alway rename the symlink to whatever you like. The bash completion code always works as it is based on the basename of the command. I personally rename it to `sms` by changing the `ln -s` command from the previous code box to:
+> **TIP**: If you think the `kdeconnect-sms` command name just feels too long to type, you can always rename the symlink to whatever you like. The bash completion code will still work, as it is based on the basename of the command. I personally rename it to the shorter `sms` by changing the `ln -s` command from the previous code box to:
 >
 > `sudo ln -s /opt/kdeconnect-sms/kdeconnect-sms /usr/local/bin/sms`
 
