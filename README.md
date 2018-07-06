@@ -4,7 +4,7 @@ Simple bash script to send text messages from the command line with the `kdeconn
 
 The incentive behind the creation of this script is to provide simple address book functionality with bash autocompletion for sending text messages from the command line. Therefore, one does not have to lookup for a phone number manually and type it each time a message needs to be sent.
 
-I do not care about fancy integrations with Google contact lists or Akonadi stuff from the KDE community. This script intends to be simple as all I need is a simple name/phone address book that can be maintained in a simple text file. The most important feature that this script provides is the address book and the bash autocompletion functionality based on the address book. Other than that, it is a simple wrapper of the `kdeconnect-cli` command.
+I did not bother about fancy integrations with Google contact lists or Akonadi stuff from the KDE community. This script intends to be simple as all I need is a simple name/phone address book that can be maintained in a simple text file. The most important feature that this script provides is the address book and the bash autocompletion functionality based on the address book. Other than that, it is a simple wrapper of the `kdeconnect-cli` command.
 
 ## Installation
 
