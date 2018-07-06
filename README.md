@@ -15,6 +15,9 @@ cd /opt
 sudo git clone https://github.com/cyberang3l/kdeconnect-sms.git
 sudo ln -s /opt/kdeconnect-sms/kdeconnect-sms /usr/local/bin/kdeconnect-sms
 ```
+> **TIP**: If you think the `kdeconnect-sms` command name feels too long, you can alway rename the symlink to whatever you like. The bash completion code always works as it is based on the basename of the command. I personally rename it to `sms` by changing the `ln -s` command from the previous code box to:
+>
+> `sudo ln -s /opt/kdeconnect-sms/kdeconnect-sms /usr/local/bin/sms`
 
 Create a sample `.addressBook` file in you home directory and edit as needed:
 
@@ -43,8 +46,9 @@ EOF
 Enable bash-completion for the script:
 
 ```bash
-sed -i -n -e '/kdeconnect-sms/!p' -e '$a source <(kdeconnect-sms --bash-completion)' ~/.bashrc
+sed -i -n -e '/^source.*kdeconnect-sms/!p' -e '$a source <(kdeconnect-sms --bash-completion)' ~/.bashrc
 ```
+> **NOTE**: If you have used a different name for the kdeconnect-sms command, you should replace the occurrences of the `kdeconnect-sms` in the previous sed command to whatever name you have used.
 
 ## Usage
 
