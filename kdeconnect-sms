@@ -247,3 +247,12 @@ if ! kdeconnect-cli --list-available | grep "${phoneIdToUse}" 2>&1 > /dev/null; 
 fi
 
 kdeconnect-cli --device "${phoneIdToUse}" --send-sms "${message}" --destination "${sendTo}"
+exit_code=$?
+if [[ $exit_code -ne 0 ]] ; then
+	echo "An error occurred and the message could not be sent :("
+else
+	sentToAddrContact=$("$(basename $0)" --address-book | sed 's/\(^|\||$\)//g' | sed 's/|/at/g' | sed 's/\(^\s\+\|\s\+$\)//' | grep "${sendTo}")
+	if [[ $? -eq 0 ]] ; then sendTo="${sentToAddrContact}" ; fi
+	echo "Message successfully sent to ${sendTo}"
+fi
+exit $exit_code
