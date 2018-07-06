@@ -51,7 +51,7 @@ addressBook=(
 
 # Add the unique hex ID of the mobile device that you want to use
 # for sending text messages in the variable "phoneIdToUse" below.
-# 
+#
 # You can get a list of all kde connect paired phone ids with the
 # command "kdeconnect-cli -l".
 #
@@ -146,7 +146,7 @@ function printBashCompletionCode() {
 				fi
 				;;
 			"")
-				 _$(basename $0)_bash_completion_longopts
+				_$(basename $0)_bash_completion_longopts
 				;;
 		esac
 	}
